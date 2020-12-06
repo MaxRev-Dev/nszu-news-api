@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30717.126
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nszu-news", "nszu-news.csproj", "{DE535153-F3FE-4E73-BEFA-EF9AD3303381}"
+EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{0E033F98-BDC9-4B4C-B3E5-692E9C0F1F2C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DE535153-F3FE-4E73-BEFA-EF9AD3303381}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE535153-F3FE-4E73-BEFA-EF9AD3303381}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE535153-F3FE-4E73-BEFA-EF9AD3303381}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE535153-F3FE-4E73-BEFA-EF9AD3303381}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E033F98-BDC9-4B4C-B3E5-692E9C0F1F2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E033F98-BDC9-4B4C-B3E5-692E9C0F1F2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E033F98-BDC9-4B4C-B3E5-692E9C0F1F2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E033F98-BDC9-4B4C-B3E5-692E9C0F1F2C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {665BCB6D-4191-4B0E-99F7-105720A258E4}
+	EndGlobalSection
+EndGlobal

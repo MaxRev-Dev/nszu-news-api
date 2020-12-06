@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  nszu-news:
+    image: ${DOCKER_REGISTRY-}nszunews
+    build:
+      context: .
+      dockerfile: Dockerfile
