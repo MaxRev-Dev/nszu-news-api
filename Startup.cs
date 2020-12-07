@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Hosting.Internal;
 using Microsoft.OpenApi.Models;
 using NSZUNews.Controllers;
+using NSZUNews.Services;
 using Quartz;
 
 namespace NSZUNews
@@ -22,12 +23,17 @@ namespace NSZUNews
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<NewsService>();
-            services.AddSingleton<ArticleRepository>();
+            services.AddScoped<NewsService>();
+            services.AddScoped<ArticleRepository>();
             services.AddSingleton<NewsParser>();
             services.AddTransient<NewsParserJob>();
             services.AddHostedService(x => x.GetService<NewsParser>());
+            services.AddRouting(options =>
+            {
+                options.LowercaseUrls = true;
+            });
             services.AddControllers();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "nszu_news", Version = "v1" });
@@ -41,8 +47,7 @@ namespace NSZUNews
                 q.AddJob<NewsParserJob>(j => j.WithIdentity(jobKey));
                 q.UseMicrosoftDependencyInjectionJobFactory();
                 q.AddTrigger(t =>
-                    t.ForJob(jobKey)
-                        .StartNow()
+                    t.ForJob(jobKey) 
                         .WithSimpleSchedule(x =>
                             x.WithIntervalInHours(
                                     Configuration.GetSection("NewsParser")
@@ -56,6 +61,11 @@ namespace NSZUNews
             {
                 options.WaitForJobsToComplete = true;
             });
+             
+
+            services.AddDbContext<ArticlesContext>(options =>
+                options.UseNpgsql(Configuration.GetConnectionString("ArticlesContext")));
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

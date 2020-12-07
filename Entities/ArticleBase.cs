@@ -1,10 +1,12 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 
-namespace NSZUNews
+namespace NSZUNews.Entities
 {
     public class ArticleBase
     {
-        public string Id;
+        [Key]
+        public string Id { get; set; }
 
         public DateTime FetchDate; 
 

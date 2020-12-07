@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using NSZUNews.Entities;
 
 namespace NSZUNews.Controllers
 {
@@ -14,7 +15,8 @@ namespace NSZUNews.Controllers
 
         public IEnumerable<ArticleBase> GetCollection(int count)
         {
-            return _articleRepository.ArticleList.Take(count);
+            return _articleRepository.Context.Articles
+                .OrderByDescending(c => c.Date).Take(count);
         }
     }
 }

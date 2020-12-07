@@ -2,8 +2,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using NSZUNews.Entities;
 using System;
-using System.IO;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -11,24 +12,27 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.XPath;
+using Microsoft.Extensions.DependencyInjection;
+using NSZUNews.Services;
 
 namespace NSZUNews.Controllers
 {
     public class NewsParser : IHostedService
     {
         private readonly ILogger<NewsParser> _logger;
-        private readonly ArticleRepository _repository;
+        private readonly IHostApplicationLifetime _appLifetime;
+        private readonly IServiceScopeFactory _scopeFactory;
         private readonly IHostEnvironment _env;
         private readonly IConfiguration _configuration;
 
         public NewsParser(ILogger<NewsParser> logger,
-            ArticleRepository repository,
+            IServiceScopeFactory scopeFactory,
             IHostEnvironment env,
             IConfiguration configuration,
             IHostApplicationLifetime appLifetime)
         {
             _logger = logger;
-            _repository = repository;
+            _scopeFactory = scopeFactory;
             _env = env;
             _configuration = configuration;
             _appLifetime = appLifetime;
@@ -36,6 +40,9 @@ namespace NSZUNews.Controllers
 
         public async Task ParseAsync(CancellationToken token)
         {
+            using var scope = _scopeFactory.CreateScope();
+            var repository = scope.ServiceProvider
+                .GetRequiredService<ArticleRepository>();
             Ready = false;
             var parserConfig = _configuration.GetSection("NewsParser");
             var url = parserConfig["Url"];
@@ -45,7 +52,8 @@ namespace NSZUNews.Controllers
                 for (int i = 1; i <= countPages; i++)
                 {
                     var finalUrl = string.Format(url, i);
-                    await GetForPage(i, finalUrl, token);
+                    await GetForPage(repository, i, finalUrl, token);
+                    await repository.SaveAsync();
                     if (token.IsCancellationRequested)
                         return;
                 }
@@ -55,15 +63,15 @@ namespace NSZUNews.Controllers
                 _logger.LogInformation($"XPath error: {e.Message}");
                 return;
             }
-
-            _repository.Save(CacheFile);
+            await repository.SaveAsync();
             _logger.LogInformation("News parser finished it's job");
             Ready = true;
         }
 
         public bool Ready { get; set; }
 
-        private async Task GetForPage(int page, string pageUrl, CancellationToken token)
+        private async Task GetForPage(ArticleRepository articleRepository,
+            int page, string pageUrl, CancellationToken token)
         {
             var topContainerXpath =
                 _configuration.GetSection("NewsParser")["topContainerXpath"];
@@ -99,7 +107,7 @@ namespace NSZUNews.Controllers
                     var article = new ArticleBase
                     {
                         Id = GetHashString(title + date),
-                        Date = DateTime.Parse(date),
+                        Date = DateTime.Parse(date.Trim(), new CultureInfo("uk-UA"), DateTimeStyles.None),
                         Url = url,
                         Title = title,
                         ImageUrl = "https://" + uri.Host + imgSrc,
@@ -107,7 +115,7 @@ namespace NSZUNews.Controllers
                         FetchDate = DateTime.Now
                     };
 
-                    if (_repository.Contains(article.Id)
+                    if (articleRepository.Contains(article.Id)
                         && (DateTime.Now - article.FetchDate) < cacheRefresh)
                     {
                         continue;
@@ -117,7 +125,7 @@ namespace NSZUNews.Controllers
                     article.Content =
                         await GetArticleContent(article.Url, token);
 
-                    _repository.Add(article);
+                    articleRepository.Add(article);
                     _logger.LogInformation($"Fetched page {page} => {article.Title}");
                 }
 
@@ -160,7 +168,6 @@ namespace NSZUNews.Controllers
                 sb.Append(b.ToString("X2"));
             return sb.ToString();
         }
-        private readonly IHostApplicationLifetime _appLifetime;
 
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -179,17 +186,14 @@ namespace NSZUNews.Controllers
 
         private async void OnStarted()
         {
-            if (File.Exists(CacheFile))
-            {
-                await _repository.LoadAsync(CacheFile);
-            } 
+            using var scope = _scopeFactory.CreateScope();
+            var repository = scope.ServiceProvider
+                .GetRequiredService<ArticleRepository>();
+            await repository.LoadAsync();
         }
-
-        private string CacheFile => Path.Combine(_env.ContentRootPath, "news-cache.json");
 
         private void OnStopping()
         {
-            _repository.Save(CacheFile);
         }
 
         private void OnStopped()

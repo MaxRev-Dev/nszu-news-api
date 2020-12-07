@@ -1,49 +1,36 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using NSZUNews.Entities;
+using NSZUNews.Services;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace NSZUNews.Controllers
 {
     public class ArticleRepository
     {
-        private readonly JsonSerializerOptions _serializerOptions;
+        public ArticlesContext Context { get; } 
 
-        public ArticleRepository()
+        public ArticleRepository(ArticlesContext articlesContext)
         {
-            _serializerOptions = new JsonSerializerOptions
-            {
-                IncludeFields = true
-            };
-        }
-        public List<ArticleBase> ArticleList { get; private set; } = new List<ArticleBase>();
-
-
-        public async Task LoadAsync(string cacheFile)
+            Context = articlesContext; 
+        } 
+        public async Task LoadAsync()
         {
-            var jsonString = File.OpenRead(cacheFile);
-            ArticleList = await JsonSerializer
-                .DeserializeAsync<List<ArticleBase>>(jsonString, _serializerOptions);
+            await Context.Database.EnsureCreatedAsync(); 
         }
 
-        public void Save(string cacheFile)
+        public async Task SaveAsync()
         {
-            using var fileStream = File.Open(cacheFile,
-                File.Exists(cacheFile) ? FileMode.Truncate : FileMode.OpenOrCreate);
-            using var writer = new Utf8JsonWriter(fileStream);
-
-            JsonSerializer.Serialize(writer, ArticleList, _serializerOptions);
+            await Context.SaveChangesAsync(); 
         }
 
         public bool Contains(string articleId)
         {
-            return ArticleList.Any(x => x.Id == articleId);
+            return Context.Articles.Any(x => x.Id == articleId);
         }
 
         public void Add(ArticleBase article)
         {
-            ArticleList.Add(article);
+            Context.Articles.Add(article);
         }
     }
 }
