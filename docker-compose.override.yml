@@ -10,19 +10,20 @@ services:
       - "443"
     volumes:
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    depends_on:
+     - postgresql
   postgresql:
     restart: always
     container_name: postgresql
     image: postgres:latest
-    env_file: .env-news
     ports:
       - "5432:5432"
     volumes:
       - postgresql_db:/var/lib/postgresql/data
     environment:
-     - POSTGRES_DB={POSTGRES_DB}
-     - POSTGRES_USER={POSTGRES_USER}
-     - POSTGRES_PASSWORD={POSTGRES_PASSWORD}
+     - POSTGRES_DB=${POSTGRES_DB}
+     - POSTGRES_USER=${POSTGRES_USER}
+     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       
 volumes:
   postgresql_db:  
